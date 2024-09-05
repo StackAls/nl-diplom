@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: my
+  name: my
+  # namespace: my
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my
+  template:
+    metadata:
+      labels:
+        app: my
+    spec:
+      automountServiceAccountToken: false
+      # # kubectl create secret docker-registry regcred --docker-server=cr.yandex --docker-username=oauth --docker-password=$OAUTH
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - env: []
+          image: cr.yandex/crp3d0vsnc3no3t2sntn/nginx:latest
+          name: nginx
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi

@@ -27,8 +27,8 @@ resource "null_resource" "kubespray" {
   #   environment = { ANSIBLE_HOST_KEY_CHECKING = "False" }
   # }
 
-  triggers = {
-    # always_run = "${timestamp()}"
-  }
+  # triggers = {
+  #   # always_run = "${timestamp()}"
+  # }
 
 }

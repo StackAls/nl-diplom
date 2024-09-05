@@ -13,5 +13,5 @@ output "servers" {
       ip_nat = i.network_interface[0].nat_ip_address
       }
     ]
-  , "kube.conf = kubespray/inventory/cluster/rtifacts/admin.conf"]
+  , "kube.conf = kubespray/inventory/cluster/artifacts/admin.conf"]
 }

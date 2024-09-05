@@ -20,8 +20,9 @@ resource "yandex_compute_instance" "master" {
     preemptible = var.vm_preemptible
   }
   network_interface {
-    subnet_id = yandex_vpc_subnet.public[count.index].id
-    nat       = var.vm_nat_enable
+    subnet_id      = yandex_vpc_subnet.public[count.index].id
+    nat            = var.vm_nat_enable
+    nat_ip_address = var.my_ip_address
   }
 
   metadata = var.metadata["ssh-key"]
