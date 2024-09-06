@@ -244,3 +244,12 @@ curl -o actions-runner-linux-x64-2.319.1.tar.gz -L https://github.com/actions/ru
 ![screen](./screen/Screenshot-site.png)
 
 ![screen](./screen/Screenshot-CI.png)
+
+Дополнительно настроил ALB. При входе на <https://stackals.ru/> трафик перераспределяется по подам, на которых развернуто приложение.
+Сертификат создан в Certificate Manager от LetsEncrypt и прикручен к ALB.
+
+![screen](./screen/Screenshot-ALB.png)
+
+![screen](./screen/Screenshot-ALB-BG.png)
+
+![screen](./screen/Screenshot-site-alb.png)
