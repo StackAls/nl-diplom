@@ -1,22 +1,36 @@
 # Дипломная работа
 
+---
+
+## Цели
+
+1. Подготовить облачную инфраструктуру на базе облачного провайдера Яндекс.Облако.
+2. Запустить и сконфигурировать Kubernetes кластер.
+3. Установить и настроить систему мониторинга.
+4. Настроить и автоматизировать сборку тестового приложения с использованием Docker-контейнеров.
+5. Настроить CI для автоматической сборки и тестирования.
+6. Настроить CD для автоматического развёртывания приложения.
+
 ## Предварительная подготовка
 
-[Код в папке terraform-init](./terraform-init/)
-
-Для первоначальной инициализации инфраструктуры работы с terraform (хранения состояния в бакете на S3) создаю сервисный аккаунт s3admin и бакет stackals-tfm-bkt (файлы tf-backet*). Так же создаю сервисный аккаунт sa-registry и registry для хранения Docker образов (файлы registry*).
-
 1. Создайте сервисный аккаунт, который будет в дальнейшем использоваться Terraform для работы с инфраструктурой с необходимыми и достаточными правами. Не стоит использовать права суперпользователя
-
-Создал пользователя terraform для дальнейшего взаимодействия с облаком по документации
-[https://yandex.cloud/ru/docs/tutorials/infrastructure-management/terraform-quickstart]
 
 2. Подготовьте [backend](https://www.terraform.io/docs/language/settings/backends/index.html) для Terraform:  
    а. Рекомендуемый вариант: S3 bucket в созданном ЯО аккаунте(создание бакета через TF)
 
+3. Создайте VPC с подсетями в разных зонах доступности.
+
 ---
 
-   Создаю бакет stackals-tfm-bkt и произвожу инициализацию
+Создал пользователя terraform для дальнейшего взаимодействия с облаком по документации
+[https://yandex.cloud/ru/docs/tutorials/infrastructure-management/terraform-quickstart]
+
+[Код в папке terraform-init](./terraform-init/)
+
+Чтобы создание/удаление инфраструктуры kubernetes не влияло на хранение состояния terraform в бакете, я отделил код создания бакета для terraform и код создания регистри для хранения образов Docker от кода создания кластера Kubernetes.
+Для первоначальной инициализации инфраструктуры работы с terraform (хранения состояния в бакете на S3) создаю сервисный аккаунт s3admin и бакет stackals-tfm-bkt (файлы tf-backet*). Так же создаю сервисный аккаунт sa-registry и registry для хранения Docker образов (файлы registry*).
+
+   Создаю бакет stackals-tfm-bkt и произвожу инициализацию - состояние terraform хранится в stackals.tfstate. (Для Kubernetes в project.tfstate)
 
    ```bash
    terraform init -backend-config="access_key=$ACCESS_KEY" -backend-config="secret_key=$SECRET_KEY"
@@ -24,16 +38,11 @@
    terraform apply -auto-approve
    ```
 
----
+Теперь создаю инфраструктуру для kubernetes
 
-   Теперь создаю инфраструктуру для kubernetes
    [Код в папке kuber-init](./kuber-init/)
 
-3. Создайте VPC с подсетями в разных зонах доступности.
-
-   [vpc.tf](./kuber-init/vpc.tf)
-
-   [vpc_var.tf](./kuber-init/vpc_var.tf)
+Сети [vpc.tf](./kuber-init/vpc.tf) и [vpc_var.tf](./kuber-init/vpc_var.tf)
 
 ---
 
@@ -41,7 +50,7 @@
 
 [Код в папке kuber-init](./kuber-init/)
 
-На этом этапе необходимо создать [Kubernetes](https://kubernetes.io/ru/docs/concepts/overview/what-is-kubernetes/) кластер на базе предварительно созданной инфраструктуры.   Требуется обеспечить доступ к ресурсам из Интернета.
+На этом этапе необходимо создать Kubernetes кластер на базе предварительно созданной инфраструктуры. Требуется обеспечить доступ к ресурсам из Интернета.
 
 Это можно сделать двумя способами:
 
@@ -58,7 +67,7 @@
 
    Для инвентори ansible используется шаблон [templates/inventory.tftpl](./kuber-init/templates/inventory.tftpl)
 
-   Скрипт подготовки инфраструктуры ansible, выполнения playbook и запуска на готовом кластере стека kubernetes-prometheus <https://github.com/prometheus-operator/kube-prometheus> (Prometheus, Grafana, Alertmanager) для мониторинга кластера [ansible/kubespray.sh](./kuber-init/ansible/kubespray.sh)
+   Создал скрипт подготовки инфраструктуры ansible, выполнения playbook и запуска на готовом кластере стека kubernetes-prometheus <https://github.com/prometheus-operator/kube-prometheus> (Prometheus, Grafana, Alertmanager) для мониторинга кластера [ansible/kubespray.sh](./kuber-init/ansible/kubespray.sh) Благодаря ему Terraform сконфигурирован и создание инфраструктуры посредством Terraform возможно без дополнительных ручных действий.
 
    Во время исполнения playbook по пути ansible/kubespray/inventory/cluster/artifacts/admin.conf выгружается конфиг для подключения к кластеру - его и использую дальше в скрипте для настройки стека kubernetes-prometheus (Prometheus, Grafana, Alertmanager).
 
@@ -68,26 +77,30 @@
 2. В файле `~/.kube/config` находятся данные для доступа к кластеру.
 3. Команда `kubectl get pods --all-namespaces` отрабатывает без ошибок.
 
-![screen](./screen/Screenshot.png)
+![screen](./screen/Screenshot234044.png)
 
-При ручном изменении сертификата для доступа kubectl к кластеру:
+При ручном изменении сертификата для доступа kubectl к кластеру необходимо выполнить:
 
 ```bash
 # Добавление в сертификат внешнего IP
 # https://blog.scottlowe.org/2019/07/30/adding-a-name-to-kubernetes-api-server-certificate/
 # https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/
+
+# считываю текущую конфигурацию и меняю доступные в сертификате IP
 # sudo kubectl edit configmap -n kube-system kubeadm-config
 # sudo kubectl -n kube-system get configmap kubeadm-config -o yaml
 sudo nano /etc/kubernetes/kubeadm-config.yaml
+# удаляю текущие сертификаты
 mkdir ~/kubernetes/
 sudo mv /etc/kubernetes/pki/apiserver.{crt,key} ~/kubernetes/
 sudo kubeadm init phase certs apiserver --config /etc/kubernetes/kubeadm-config.yaml
-# restart apiserver
+# restart apiserver - через его удаление - автоматическое создание кластером
 sudo crictl pods | grep kube-apiserver | cut -d' ' -f1
+# id заменить на свой
 sudo crictl stopp 5c688d6c476dd
 sudo crictl rmp 5c688d6c476dd
 
-# test
+# тест
 sudo kubeadm init phase upload-config kubeadm --config /etc/kubernetes/kubeadm-config.yaml
 # copy admin.conf
 mkdir ~/.kube
@@ -97,8 +110,8 @@ sudo chown $USER ~/.kube/config
 
 ---
 
-Так же вручную установка стека для мониторинга <https://github.com/prometheus-operator/kube-prometheus> . В целом - можно использовать настройки по умолчанию. Но в таком случае снаружи не будет доступен. Необходимо включить использование NodePorts.
-В таком случае проект собирается по инструкции. В скрипте [ansible/kubespray.sh](./kuber-init/ansible/kubespray.sh) это закомментировано для более быстрой сборки (кластер пересоздавал несколько раз - отрабатывал косяки в скрипте)
+Так же, при необходимости, возможна вручную установка стека для мониторинга <https://github.com/prometheus-operator/kube-prometheus> . В целом всё устанавливается по README и можно использовать настройки по умолчанию. Но тогда снаружи не будет доступен. Необходимо включить использование NodePorts.
+В таком случае проект собирается так
 
 ```shell
 
@@ -127,7 +140,9 @@ chmod +x build.sh
 ./build.sh
 ```
 
-Установка стека мониторинга кластера
+В скрипте [ansible/kubespray.sh](./kuber-init/ansible/kubespray.sh) это закомментировано для более быстрой сборки кластера (кластер пересоздавал несколько раз - отрабатывал различные конфигурации, поэтому необходимости устанавливать, уже установленное в первый запуск, на локальной машине нет)
+
+После сборки конфигурации стека - установка стека мониторинга кластера - тоже по README
 
 ```shell
 # Create the namespace and CRDs, and then wait for them to be available before creating the remaining resources
@@ -158,6 +173,8 @@ kubectl --namespace monitoring port-forward svc/grafana 3000
 kubectl --namespace monitoring port-forward svc/alertmanager-main 9093
 # Open Alertmanager on [localhost:9093](http://localhost:9093) in your browser.
 ```
+
+![screen](./screen/Screenshot112513.png)
 
 ---
 
@@ -223,3 +240,7 @@ curl -o actions-runner-linux-x64-2.319.1.tar.gz -L https://github.com/actions/ru
 Затем деплоится на kubernetes.
 
 ---
+
+![screen](./screen/Screenshot-site.png)
+
+![screen](./screen/Screenshot-CI.png)
