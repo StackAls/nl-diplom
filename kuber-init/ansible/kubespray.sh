@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# подготовка окружения для ansible на локальной машине
-sudo apt update && sudo apt upgrade -y
-sudo apt install software-properties-common -y
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update && sudo apt install python3.12 python3.12-venv
+# # подготовка окружения для ansible на локальной машине
+# sudo apt update && sudo apt upgrade -y
+# sudo apt install software-properties-common -y
+# sudo add-apt-repository ppa:deadsnakes/ppa
+# sudo apt update && sudo apt install python3.12 python3.12-venv
 
 # настройка kubespray
 # git clone https://github.com/kubernetes-sigs/kubespray

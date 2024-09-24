@@ -40,11 +40,17 @@ jobs:
       run: |
         cd ./kuber-init
         terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
+
+    - name: terraform kuber plan
+      run: |
+        ls -la
+        cd ./kuber-init
         terraform plan
         terraform apply -auto-approve
         
     - name: kuber deploy
       run: |
+        ls -la
         ./kuber-init/ansible/kubespray.sh
 
   check_deploy:
