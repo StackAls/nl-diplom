@@ -29,12 +29,12 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v4
     
-    - name: terraform init
-      run: |
-        cd ./terraform-init
-        terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
-        terraform plan
-        terraform apply -auto-approve
+    # - name: terraform init
+    #   run: |
+    #     cd ./terraform-init
+    #     terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
+    #     terraform plan
+    #     terraform apply -auto-approve
     
     - name: terraform kuber init
       run: |
