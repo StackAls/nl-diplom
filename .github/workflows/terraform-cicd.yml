@@ -11,10 +11,9 @@ on:
     branches: 
       - 'main'
 
-# env:
-#   DOCKER_IMAGE_NAME: nginx
-#   DOCKER_REGISTRY_URL: cr.yandex
-#   DOCKER_REGISTRY_ID: crp3d0vsnc3no3t2sntn
+env:
+  TFM_ACCESS_KEY: ${{ secrets.TFM_ACCESS_KEY }}
+  TFM_SECRET_KEY: ${{ secrets.TFM_SECRET_KEY }}
 
 jobs:
   deploy_terraform:
