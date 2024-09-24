@@ -14,6 +14,9 @@ on:
 env:
   TFM_ACCESS_KEY: ${{ secrets.TFM_ACCESS_KEY }}
   TFM_SECRET_KEY: ${{ secrets.TFM_SECRET_KEY }}
+  YA_TKN: ${{ secrets.YA_TKN }}
+  YA_CLOUD_ID: ${{ secrets.YA_CLOUD_ID }}
+  YA_FOLDER_ID: ${{ secrets.YA_FOLDER_ID }}
 
 jobs:
   deploy_terraform:
@@ -29,14 +32,17 @@ jobs:
     - name: terraform init
       run: |
         cd ./terraform-init
-        # terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
+        terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
         terraform plan 
         terraform apply -auto-approve
     
     - name: terraform kuber init
       run: |
         cd ./kuber-init
-        # terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
+        terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY" \
+          -var="token=$YA_TKN" \
+          -var="cloud_id=$YA_CLOUD_ID" \
+          -var="folder_id=$YA_FOLDER_ID"
         terraform plan 
         terraform apply -auto-approve
         
