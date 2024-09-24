@@ -50,8 +50,9 @@ jobs:
         
     - name: kuber deploy
       run: |
-        ls -la ./kuber-init/ansible/
-        ./kuber-init/ansible/kubespray.sh
+        cd ./kuber-init
+        chmod +x ./ansible/kubespray.sh
+        ./ansible/kubespray.sh
 
   check_deploy:
     needs: deploy_terraform
