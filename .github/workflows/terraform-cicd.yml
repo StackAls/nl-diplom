@@ -62,7 +62,7 @@ jobs:
         cp ../inventory.ini inventory/cluster/inventory.ini
         # копирую на локальную машину конфиг kubernetes
         sed -i 's/# kubeconfig_localhost: false/kubeconfig_localhost: true/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
-        sed -i 's/# supplementary_addresses_in_ssl_keys: [10.0.0.1, 10.0.0.2, 10.0.0.3]/supplementary_addresses_in_ssl_keys: [178.154.205.25]/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
+        sed -i 's/# supplementary_addresses_in_ssl_keys: \[10.0.0.1, 10.0.0.2, 10.0.0.3\]/supplementary_addresses_in_ssl_keys: \[178.154.205.25\]/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
     
     - name: ansible run
       run: | 
