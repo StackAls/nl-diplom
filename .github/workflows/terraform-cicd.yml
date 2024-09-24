@@ -29,13 +29,6 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v4
     
-    # - name: terraform init
-    #   run: |
-    #     cd ./terraform-init
-    #     terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
-    #     terraform plan
-    #     terraform apply -auto-approve
-    
     - name: terraform kuber init
       run: |
         cd ./kuber-init
@@ -48,7 +41,7 @@ jobs:
         terraform plan
         terraform apply -auto-approve
         
-    - name: kubespray deploy
+    - name: kubespray configure
       run: |
         cd ./kuber-init/ansible
         git clone https://github.com/kubernetes-sigs/kubespray
@@ -64,7 +57,7 @@ jobs:
         sed -i 's/# kubeconfig_localhost: false/kubeconfig_localhost: true/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
         sed -i 's/# supplementary_addresses_in_ssl_keys:.*/supplementary_addresses_in_ssl_keys: \[178.154.205.25\]/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
     
-    - name: ansible run
+    - name: kubespray ansible run
       run: | 
         cd ./kuber-init/ansible/kubespray
         export ANSIBLE_HOST_KEY_CHECKING=False
@@ -85,3 +78,35 @@ jobs:
         run: |
           sed -i 's/server: https:\/\/.*/server: https:\/\/178.154.205.25:6443/' ~/.kube/config
           kubectl get pods --all-namespaces
+
+  deploy_prometheus:
+    needs: check_deploy
+    name: Deploy Prometheus
+    runs-on: notebook
+
+    steps:
+      - name: prometheus configure
+        run: |
+          # подготовка окружения для установки kube-prometheus
+          cd ./kuber-init/ansible/kube-prometheus-custom
+          # установка доп ПО
+          go install -a github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb@latest
+          go install github.com/brancz/gojsontoyaml@latest
+          go install github.com/google/go-jsonnet/cmd/jsonnet@latest
+          # Инициализация проекта
+          # Creates the initial/empty `jsonnetfile.json`
+          jb init
+          # Creates `vendor/` & `jsonnetfile.lock.json`, and fills in `jsonnetfile.json`
+          jb install github.com/prometheus-operator/kube-prometheus/jsonnet/kube-prometheus@main
+          # wget https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/example.jsonnet -O example.jsonnet
+          # nano example.jsonnet
+          # wget https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/build.sh -O build.sh
+          chmod +x build.sh
+          ./build.sh
+
+      - name: prometheus deploy
+        run: |
+          # установка Prometheus
+          kubectl apply --server-side -f manifests/setup
+          kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+          kubectl apply -f manifests/
