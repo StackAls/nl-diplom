@@ -41,18 +41,29 @@ jobs:
         cd ./kuber-init
         terraform init -backend-config="access_key=$TFM_ACCESS_KEY" -backend-config="secret_key=$TFM_SECRET_KEY"
 
-    - name: terraform kuber plan
+    - name: terraform kuber apply
       run: |
         ls -la
         cd ./kuber-init
         terraform plan
         terraform apply -auto-approve
         
-    - name: kuber deploy
+    - name: kubespray deploy
       run: |
-        cd ./kuber-init
-        chmod +x ./ansible/kubespray.sh
-        ./ansible/kubespray.sh
+        cd ./kuber-init/ansible
+        git clone https://github.com/kubernetes-sigs/kubespray
+        cd kubespray
+        python3.12 -m venv .venv
+        .venv/bin/pip install --upgrade pip
+        .venv/bin/pip install -r requirements.txt
+        ln -sf -t playbooks ../roles
+        # добавляю инвентори
+        cp -rp inventory/sample/ inventory/cluster
+        cp ../inventory.ini inventory/cluster/inventory.ini
+        # копирую на локальную машину конфиг kubernetes
+        sed -i 's/# kubeconfig_localhost: false/kubeconfig_localhost: true/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
+        sed -i 's/# supplementary_addresses_in_ssl_keys: [10.0.0.1, 10.0.0.2, 10.0.0.3]/supplementary_addresses_in_ssl_keys: [178.154.205.25]/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
+  
 
   check_deploy:
     needs: deploy_terraform
