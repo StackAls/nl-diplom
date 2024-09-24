@@ -20,7 +20,7 @@ env:
 
 jobs:
   deploy_terraform:
-    name: Deploy Images on kuber
+    name: Deploy kubernetes cluster
     environment: prod
     # Runner to use
     runs-on: notebook
@@ -45,7 +45,7 @@ jobs:
         
     - name: kuber deploy
       run: |
-        cp ./kuber-init/ansible/kubespray/inventory/cluster/artifacts/admin.conf ~/.kube/config
+        ./kuber-init/ansible/kubespray.sh
 
   check_deploy:
     needs: deploy_terraform
