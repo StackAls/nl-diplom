@@ -63,7 +63,17 @@ jobs:
         # копирую на локальную машину конфиг kubernetes
         sed -i 's/# kubeconfig_localhost: false/kubeconfig_localhost: true/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
         sed -i 's/# supplementary_addresses_in_ssl_keys: [10.0.0.1, 10.0.0.2, 10.0.0.3]/supplementary_addresses_in_ssl_keys: [178.154.205.25]/' inventory/cluster/group_vars/k8s_cluster/k8s-cluster.yml
-  
+    
+    - name: ansible run
+      run: | 
+        cd ./kuber-init/ansible/kubespray
+        export ANSIBLE_HOST_KEY_CHECKING=False
+        .venv/bin/ansible-playbook -u admin --private-key ~/.ssh/nl-ya-ed25519 -i inventory/cluster/inventory.ini cluster.yml -b -v
+    
+    - name: copy kube.conf
+      run: |
+        mkdir -p ~/.kube
+        cp ./kuber-init/ansible/kubespray/inventory/cluster/artifacts/admin.conf ~/.kube/config
 
   check_deploy:
     needs: deploy_terraform
