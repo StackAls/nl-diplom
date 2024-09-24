@@ -1,0 +1,54 @@
+name: Deploy prod
+
+on:
+  # Trigger the action manually from the UI
+  workflow_dispatch:
+  # Trigger the action when I create or push a `release/**` branch
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches: 
+      - 'main'
+
+# env:
+#   DOCKER_IMAGE_NAME: nginx
+#   DOCKER_REGISTRY_URL: cr.yandex
+#   DOCKER_REGISTRY_ID: crp3d0vsnc3no3t2sntn
+
+jobs:
+  deploy_terraform:
+    name: Deploy Images on kuber
+    environment: prod
+    # Runner to use
+    runs-on: notebook
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v4
+    
+    - name: terraform init
+      run: |
+        cd ./terraform-init
+        terraform plan 
+        terraform apply -auto-approve
+    
+    - name: terraform kuber init
+      run: |
+        cd ./kuber-init
+        terraform plan 
+        terraform apply -auto-approve
+        
+    - name: kuber deploy
+      run: |
+        cp ./kuber-init/ansible/kubespray/inventory/cluster/artifacts/admin.conf ~/.kube/config
+
+  check_deploy:
+    needs: deploy_terraform
+    name: Check deploy terraform
+    runs-on: notebook
+
+    steps:
+      - name: copy kubeconfig
+        run: |
+          kubectl get pods --all-namespaces
