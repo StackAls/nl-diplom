@@ -20,7 +20,7 @@ env:
 
 jobs:
   deploy_terraform:
-    name: Deploy kubernetes cluster
+    name: Deploy hosts for kubernetes cluster
     environment: prod
     # Runner to use
     runs-on: notebook
@@ -40,7 +40,15 @@ jobs:
         cd ./kuber-init
         terraform plan
         terraform apply -auto-approve
-        
+
+  deploy_kubernetes:
+    needs: deploy_terraform
+    name: Deploy kubernetes cluster
+    environment: prod
+    # Runner to use
+    runs-on: notebook
+
+    steps:
     - name: kubespray configure
       run: |
         cd ./kuber-init/ansible
@@ -61,7 +69,7 @@ jobs:
       run: | 
         cd ./kuber-init/ansible/kubespray
         export ANSIBLE_HOST_KEY_CHECKING=False
-        .venv/bin/ansible-playbook -u admin --private-key ~/.ssh/nl-ya-ed25519 -i inventory/cluster/inventory.ini cluster.yml -b -v
+        .venv/bin/ansible-playbook -u admin --private-key ~/.ssh/nl-ya-ed25519 -i inventory/cluster/inventory.ini cluster.yml -b
     
     - name: copy kube.conf
       run: |
@@ -69,14 +77,17 @@ jobs:
         cp ./kuber-init/ansible/kubespray/inventory/cluster/artifacts/admin.conf ~/.kube/config
 
   check_deploy:
-    needs: deploy_terraform
-    name: Check deploy terraform
+    needs: deploy_kubernetes
+    name: Check deploy kubernetes
     runs-on: notebook
 
     steps:
-      - name: copy kubeconfig
+      - name: config kubeconfig
         run: |
           sed -i 's/server: https:\/\/.*/server: https:\/\/178.154.205.25:6443/' ~/.kube/config
+      
+      - name: test pods
+        run: |
           kubectl get pods --all-namespaces
 
   deploy_prometheus:
@@ -99,7 +110,12 @@ jobs:
 
       - name: prometheus deploy
         run: |
+          cd ./kuber-init/ansible/kube-prometheus-custom
           # установка Prometheus
           kubectl apply --server-side -f manifests/setup
           kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
           kubectl apply -f manifests/
+
+      - name: prometheus check
+        run: |
+          kubectl get pods --namespace=monitoring
