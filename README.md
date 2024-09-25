@@ -156,7 +156,19 @@ kubectl wait \
 kubectl apply -f manifests/
 ```
 
-Тестирование работоспособности мониторинга
+## Подготовка cистемы мониторинга и деплой кластера Kubernetes через CI/CD
+
+Для автоматического деплоя kubernetes кластера и разворачивания на нём стека системы мониторинга создал CI/CD пайплайн
+
+[.github/workflows](./.github/workflows/)
+
+Файл terraform-init-s3.yml - отвечает за первоначальную настройку бакета хранящего состояния terraform. Запускается вручную - т.к. его установка и настройка необходима один раз.
+
+Файл terraform-cicd.yml - непосредственно автоматический пайплайн для ветки main. Запускает terraform и затем выполняет настройку и установку kubernetes кластера с помощью kubespray. Далее делает установку стека Prometheus.
+
+![screen](./screen/Screenshot-ci-tfm.png)
+
+### Тестирование работоспособности мониторинга
 
 ```bash
 ## Prometheus
@@ -195,7 +207,7 @@ kubectl --namespace monitoring port-forward svc/alertmanager-main 9093
 1. Git репозиторий с тестовым приложением и Dockerfile.
 2. Регистри с собранным docker image. В качестве регистри может быть DockerHub или [Yandex Container Registry](https://cloud.yandex.ru/services/container-registry), созданный также с помощью terraform.
 
-## Установка и настройка CI/CD
+## Установка и настройка CI/CD приложения
 
 Осталось настроить ci/cd систему для автоматической сборки docker image и деплоя приложения при изменении кода.
 
