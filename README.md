@@ -166,6 +166,8 @@ kubectl apply -f manifests/
 
 Файл terraform-cicd.yml - непосредственно автоматический пайплайн для ветки main. Запускает terraform и затем выполняет настройку и установку kubernetes кластера с помощью kubespray. Далее делает установку стека Prometheus.
 
+Посмотреть выполнение пайплайнов можно здесь [Actions](https://github.com/StackAls/nl-diplom/actions)
+
 ![screen](./screen/Screenshot-ci-tfm.png)
 
 ### Тестирование работоспособности мониторинга

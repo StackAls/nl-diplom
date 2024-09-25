@@ -115,7 +115,13 @@ jobs:
           kubectl apply --server-side -f manifests/setup
           kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
           kubectl apply -f manifests/
+  
+  check_prometheus:
+    needs: check_deploy
+    name: Check Prometheus
+    runs-on: notebook
 
-      - name: prometheus check
+    steps:
+      - name: prometheus pods check
         run: |
           kubectl get pods --namespace=monitoring
